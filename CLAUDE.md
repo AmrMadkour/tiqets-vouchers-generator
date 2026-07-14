@@ -14,13 +14,12 @@ tracked in **`Tiqets-Voucher-Generator-Plan.md`**.
 
 ## Current status
 
-Greenfield: no implementation code exists yet. The repo currently has only the spec, plan, sample
-data (`data/orders.csv`, `data/barcodes.csv`), and `README.md`. Milestone M0 (environment setup —
-`requirements.txt`, venv, `tests/` folder) has not been run yet.
+M0 (environment setup — `requirements.txt`, venv, `tests/` folder, `README.md` skeleton) and M1
+(`models/order.py`, `models/barcode.py` dataclasses) are done. `io/`, `validation/`, `service/`,
+and `main.py` don't exist yet — next up is M2 (IO layer).
 
 ## Commands
 
-Once M0 is done:
 - Install deps: `pip install -r requirements.txt`
 - Run all tests: `pytest tests/ -v`
 - Run a single test: `pytest tests/test_<module>.py::test_name -v`
@@ -50,19 +49,20 @@ cases/entities/adapters layers; considered over-engineering for a CSV-processing
 - **`main.py`** — CLI entry point wiring `io(read) → validation → service → io(write)` +
   stdout bonus output + stderr rejection logs.
 
-Tests mirror these layers 1:1 in `tests/`: `test_models.py`, `test_io.py`, `test_validation.py`,
-`test_service.py`.
+Tests mirror these layers in `tests/`: `test_io.py`, `test_validation.py`, `test_service.py`.
 
 ## Output contract (must match exactly — spec §7.1)
 
 ```
 customer_id,order_id,barcodes
-CUST001,ORD001,"[BC001, BC002, BC003]"
+10,1,"[11111111111, 11111111112]"
 ```
 
-Literal square brackets inside a quoted CSV cell, one row per `(customer_id, order_id)` pair. No
-log files — validation rejections go to stderr only, bonus stats (top-5 customers, unused-barcode
-count) go to stdout only.
+Literal square brackets inside a quoted CSV cell — quoted because the barcodes column is a new
+column added on top of the source CSVs, and it contains commas between barcode values;
+without quoting, a CSV parser would treat those inner commas as column separators. One row per
+`(customer_id, order_id)` pair. No log files — validation rejections go to stderr only, bonus
+stats (top-5 customers, unused-barcode count) go to stdout only.
 
 ## Non-functional notes
 

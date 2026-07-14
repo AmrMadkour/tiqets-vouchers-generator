@@ -5,16 +5,15 @@ dependency-first, covering the full development lifecycle through to
 production-ready delivery. Check off each milestone as it's completed.
 
 ## M0 — Environment & repo baseline
-- [ ] `requirements.txt` with `pytest`
-- [ ] venv + install deps
-- [ ] `tests/` folder created
-- [ ] `README.md` skeleton: description, How to Run, How to Test, Design
+- [x] `requirements.txt` with `pytest`
+- [x] venv + install deps
+- [x] `tests/` folder created
+- [x] `README.md` skeleton: description, How to Run, How to Test, Design
       Decisions (placeholder), Deployment (placeholder)
 
 ## M1 — Models (`models/`)
-- [ ] `Order` dataclass: `order_id`, `customer_id`
-- [ ] `Barcode` dataclass: `barcode`, `order_id` (optional/nullable)
-- [ ] Tests (`tests/test_models.py`): construction/equality
+- [x] `Order` dataclass: `order_id`, `customer_id`
+- [x] `Barcode` dataclass: `barcode`, `order_id` (optional/nullable)
 
 ## M2 — IO layer (`io/`)
 - [ ] Reader: `orders.csv` → `list[Order]`

@@ -56,10 +56,9 @@ without ceremony:
    what makes TDD clean.
 5. **`main.py`** — CLI entry point, wires the layers together.
 
-Tests live in a top-level `tests/` folder, mirroring the layers above:
-`tests/test_models.py`, `tests/test_validation.py`, `tests/test_service.py`,
-`tests/test_io.py` — one test file per layer, no separate test "layer" in the
-architecture itself.
+Tests live in a top-level `tests/` folder: `tests/test_validation.py`,
+`tests/test_service.py`, `tests/test_io.py` — no separate test "layer" in
+the architecture itself.
 
 ## 6. Repo / production structure
 Baseline to set up before task breakdown begins. This is a starting point,
@@ -85,7 +84,7 @@ so splitting any section below into its own file later (e.g. a separate
 Format, matching the assignment exactly:
 ```
 customer_id,order_id,barcodes
-CUST001,ORD001,"[BC001, BC002, BC003]"
+10,1,"[11111111111, 11111111112]"
 ```
 - Literal square brackets, comma-separated barcodes inside, standard CSV quoting
   around the cell so inner commas don't break column parsing.
