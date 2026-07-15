@@ -14,11 +14,12 @@ is tracked in **`docs/Tiqets-Voucher-Generator-Plan.md`**.
 
 ## Current status
 
-M0 (environment setup), M1 (models), M2 (IO layer — `csv_io/`), and M3 (validation —
-`validation/duplicate_barcodes.py`, `validation/orphaned_orders.py`) are done, 19 passing tests
-total across `tests/test_io.py` and `tests/test_validation.py`. `service/` and `main.py` don't
-exist yet — M4 (service/core) is next. A root-level `pytest.ini` (`pythonpath = .`) was added so
-test imports like `from models.order import Order` resolve regardless of how `pytest` is invoked.
+M0 (environment setup), M1 (models), M2 (IO layer — `csv_io/`), M3 (validation — `validation/`),
+and M4 (service/core — `service/grouping.py`, `service/top_customers.py`,
+`service/unused_barcodes.py`) are done, 31 passing tests total across `tests/test_io.py`,
+`tests/test_validation.py`, and `tests/test_service.py`. `main.py` doesn't exist yet — M5 (CLI
+wiring) is next. A root-level `pytest.ini` (`pythonpath = .`) was added so test imports like `from
+models.order import Order` resolve regardless of how `pytest` is invoked.
 
 ## Commands
 
@@ -64,8 +65,14 @@ cases/entities/adapters layers; considered over-engineering for a CSV-processing
   of whether the repeats share an `order_id`, since the same physical barcode on two different
   orders is a genuine conflict the CSV alone can't resolve.
   `orphaned_orders.drop_orders_without_barcodes` drops orders left with zero valid barcodes.
-- **`service/`** (core business logic) — groups barcodes by order/customer, ranks top-5 customers
-  by ticket count, counts unused barcodes. Takes parsed data in, returns results out, no file I/O.
+- **`service/`** (core business logic) — three plain functions, one per file: `grouping.py` groups
+  barcodes by order/customer into `{(customer_id, order_id): [barcodes]}` plus a `build_rows`
+  generator for the writer; `top_customers.py` ranks top-5 customers by ticket count (summed
+  across a customer's orders, sorted by count desc then `customer_id` asc for deterministic ties —
+  a self-imposed decision since the assignment doesn't specify tie-breaking); `unused_barcodes.py`
+  counts barcodes with no `order_id`. Takes parsed data in, returns results out, no file I/O — and
+  no stdout I/O either: printing the top-5/unused-count in their required formats is `main.py`'s
+  job (M5), not `service/`'s.
   **Important:** both bonus stats (top-5, unused count) are computed from the *post-validation*
   (cleaned) dataset, not raw input — this is a deliberate decision (spec §7.2), not incidental.
 - **`main.py`** — CLI entry point wiring `csv_io(read) → validation → service → csv_io(write)` +

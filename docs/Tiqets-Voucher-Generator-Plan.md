@@ -54,13 +54,23 @@ production-ready delivery. Check off each milestone as it's completed.
       from "barcodes filtered out upstream," so a combined test would just
       re-exercise the same code path as the individual tests
 
-## M4 — Service/core (`service/`)
-- [ ] Group barcodes by order, orders by customer → output rows
-- [ ] Top-5 customers by ticket count, computed post-validation (spec
-      §7.2), including tie handling
-- [ ] Unused barcode count, computed post-validation
-- [ ] Tests (`tests/test_service.py`): grouping correctness, top-5 incl.
-      ties, unused count
+## M4 — Service/core (`service/`) — done
+- [x] `grouping.group_barcodes(orders, barcodes)` → `{(customer_id, order_id):
+      [barcodes]}`; `grouping.build_rows(grouped)` → generator of
+      `(customer_id, order_id, barcodes)` tuples for the writer (the one
+      place laziness is genuinely used — see M2 note)
+- [x] `top_customers.top_5_customers(grouped)` — sums ticket count per
+      customer across all their orders, sorted by count desc then
+      `customer_id` asc for deterministic ties, capped at 5
+- [x] `unused_barcodes.count_unused_barcodes(barcodes)` — count of barcodes
+      with `order_id is None`
+- [x] Tests (`tests/test_service.py`, 12 tests): grouping correctness
+      (incl. ignoring unsold barcodes), top-5 incl. cap and ties, unused
+      count, empty-input edge cases
+- [ ] Actual `print(...)` to stdout in the exact `customer_id,amount_of_
+      tickets` format (spec §7.2) is **not** `service/`'s job — `service/`
+      only returns data (no file/stdout I/O). Printing happens in `main.py`
+      (M5), with its own tests there.
 
 ## M5 — CLI wiring (`main.py`)
 - [ ] Wire csv_io(read) → validation → service → csv_io(write) + stdout bonus
