@@ -6,17 +6,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Python CLI that reads `orders.csv` and `barcodes.csv`, validates them, and produces a grouped
 output CSV for voucher printing, plus bonus stdout stats and a SQL data model. This is a graded
-take-home assignment (original PDF: `Tiqets Programming Assignment_ CSV files.pdf`).
+take-home assignment (original PDF: `docs/Tiqets Programming Assignment_ CSV files.pdf`).
 
-The authoritative requirements live in **`Tiqets-Voucher-Generator-Spec.md`** — read it before
-making any design decision; don't re-derive requirements from scratch. Milestone progress is
-tracked in **`Tiqets-Voucher-Generator-Plan.md`**.
+The authoritative requirements live in **`docs/Tiqets-Voucher-Generator-Spec.md`** — read it
+before making any design decision; don't re-derive requirements from scratch. Milestone progress
+is tracked in **`docs/Tiqets-Voucher-Generator-Plan.md`**.
 
 ## Current status
 
-M0 (environment setup — `requirements.txt`, venv, `tests/` folder, `README.md` skeleton) and M1
-(`models/order.py`, `models/barcode.py` dataclasses) are done. `io/`, `validation/`, `service/`,
-and `main.py` don't exist yet — next up is M2 (IO layer).
+M0 (environment setup), M1 (models), M2 (IO layer — `csv_io/`), and M3 (validation —
+`validation/duplicate_barcodes.py`, `validation/orphaned_orders.py`) are done, 19 passing tests
+total across `tests/test_io.py` and `tests/test_validation.py`. `service/` and `main.py` don't
+exist yet — M4 (service/core) is next. A root-level `pytest.ini` (`pythonpath = .`) was added so
+test imports like `from models.order import Order` resolve regardless of how `pytest` is invoked.
 
 ## Commands
 
@@ -37,16 +39,36 @@ cases/entities/adapters layers; considered over-engineering for a CSV-processing
 - **`models/`** — plain dataclasses `Order` (order_id, customer_id) and `Barcode` (barcode,
   order_id). No `Customer` class — `customer_id` is just a field on `Order`, since customers have
   no attributes or behavior beyond that ID.
-- **`io/`** — CSV readers for `orders.csv`/`barcodes.csv` and the writer for the output CSV.
-  Isolated from business logic so it's mockable in tests.
-- **`validation/`** — two rules only, both logged to stderr and non-fatal (not exceptions): drop
-  duplicate barcodes, drop orders left with zero valid barcodes. Returns cleaned data + rejected
-  items.
+- **`csv_io/`** — CSV readers for `orders.csv`/`barcodes.csv` and the writer for the output CSV.
+  Isolated from business logic so it's mockable in tests. Named `csv_io/` rather than the spec's
+  `io/` because `io` is a Python stdlib module name — it's already cached in `sys.modules` before
+  our code runs, so a local `io/` package can never actually be imported (`from io.readers import
+  ...` resolves to the stdlib module instead). One combined package for both read and write, not
+  split into `readers/`/`writers/` — both deal with the same file-IO concern. Malformed
+  `order_id`/`customer_id` values (non-numeric) are skipped and logged to stderr row-by-row rather
+  than raising — one bad row shouldn't abort the whole read. IDs stay typed as `int` (not relaxed
+  to `str`) since they're expected to back real primary/foreign keys in the SQL bonus (spec §10).
+  This is a read-time/parsing concern in `csv_io/`, distinct from `validation/`'s two business
+  rules below.
+  **Readers return plain `list`s, not generators:** every real caller (`validation/`) always fully
+  materializes the result and needs two passes over it (count/set-building, then filtering) —
+  a generator can only be iterated once, so laziness here is never actually exercised anywhere in
+  this project. Lazy generation is used instead where it's genuinely exercised: `service/` yields
+  `(customer_id, order_id, barcodes)` rows on the fly from the grouped dict straight to
+  `write_vouchers`, since the writer consumes them in one forward pass and this avoids a real
+  second in-memory copy of the output rows sitting next to the dict.
+- **`validation/`** — two rules only, both logged to stderr and non-fatal (not exceptions), each a
+  plain function in its own file returning `(cleaned, rejected)`:
+  `duplicate_barcodes.drop_duplicate_barcodes` drops **all** occurrences of a barcode that appears
+  more than once (not "keep first, drop rest") — a duplicated barcode can't be trusted regardless
+  of whether the repeats share an `order_id`, since the same physical barcode on two different
+  orders is a genuine conflict the CSV alone can't resolve.
+  `orphaned_orders.drop_orders_without_barcodes` drops orders left with zero valid barcodes.
 - **`service/`** (core business logic) — groups barcodes by order/customer, ranks top-5 customers
   by ticket count, counts unused barcodes. Takes parsed data in, returns results out, no file I/O.
   **Important:** both bonus stats (top-5, unused count) are computed from the *post-validation*
   (cleaned) dataset, not raw input — this is a deliberate decision (spec §7.2), not incidental.
-- **`main.py`** — CLI entry point wiring `io(read) → validation → service → io(write)` +
+- **`main.py`** — CLI entry point wiring `csv_io(read) → validation → service → csv_io(write)` +
   stdout bonus output + stderr rejection logs.
 
 Tests mirror these layers in `tests/`: `test_io.py`, `test_validation.py`, `test_service.py`.

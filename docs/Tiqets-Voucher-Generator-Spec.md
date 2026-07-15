@@ -18,6 +18,11 @@ grouping barcodes by customer and order, for voucher printing.
 | barcode | unique |
 | order_id | may be empty (unsold barcode) |
 
+**Malformed numeric values:** `order_id`/`customer_id` (orders.csv) and `order_id` (barcodes.csv)
+are expected to be numeric. A non-numeric value in one of these columns causes that single row to
+be skipped and logged to stderr — not a fatal error, and not one of the §4 validation rules; this
+happens during CSV parsing/deserialization in `csv_io/`, before validation runs.
+
 ## 3. Relationships
 - customer 1 → many orders
 - order 1 → many barcodes
@@ -25,8 +30,9 @@ grouping barcodes by customer and order, for voucher printing.
 - a barcode assigned to an order = sold, included in output
 
 ## 4. Validation rules
-Applied during processing; failures are **logged to stderr and excluded from output**,
-not fatal errors.
+Applied during processing in `validation/`; failures are **logged to stderr and excluded from
+output**, not fatal errors. (Malformed numeric `order_id`/`customer_id` values are a separate,
+earlier concern handled in `csv_io/` during parsing — see §2 — not one of the two rules below.)
 
 | Rule | Meaning |
 |---|---|
@@ -44,9 +50,14 @@ without ceremony:
 
 1. **`models/`** — plain data classes: `Order`, `Barcode`. No `Customer`
    class — `customer_id` is just a field on `Order`.
-2. **`io/`** (or `readers/` / `writers/`) — reading `orders.csv` /
-   `barcodes.csv`, writing the output CSV. Isolated so it can be swapped or
-   mocked in tests.
+2. **`csv_io/`** (named `csv_io/`, not `io/`, since `io` is a Python stdlib
+   module name and a local `io/` package can't actually be imported — `io`
+   is already cached in `sys.modules` before our code runs) — reading
+   `orders.csv` / `barcodes.csv`, writing the output CSV. Isolated so it can
+   be swapped or mocked in tests. Also responsible for skipping + logging to
+   stderr any row with a non-numeric `order_id`/`customer_id` — a parsing-
+   level concern, not one of the §4 validation rules, so `validation/`
+   doesn't need to re-check it.
 3. **`validation/`** — applies the two §4 rules (drop duplicate barcodes,
    drop orders with zero barcodes); takes parsed `Order`/`Barcode` lists in,
    returns the cleaned lists plus the rejected items (for stderr logging).
@@ -111,9 +122,10 @@ numbers always match what's actually in the output CSV, not the raw input.
 - Count of unused barcodes (barcodes with no order_id), printed clearly.
 
 ### 7.3 stderr (validation logging)
-- Every dropped duplicate barcode and every dropped order-without-barcodes,
-  logged as it's found. Use Python's `logging` module (default stream = stderr)
-  or `print(..., file=sys.stderr)`.
+- Every dropped duplicate barcode, every dropped order-without-barcodes, and
+  every skipped row with a malformed `order_id`/`customer_id` (§2), logged as
+  it's found. Use Python's `logging` module (default stream = stderr) or
+  `print(..., file=sys.stderr)`.
 
 No log files — only stdout/stderr, per the assignment (explicitly decided, no
 file-based logging needed).
