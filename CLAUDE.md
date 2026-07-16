@@ -8,9 +8,9 @@ Python CLI that reads `orders.csv` and `barcodes.csv`, validates them, and produ
 output CSV for voucher printing, plus bonus stdout stats and a SQL data model. This is a graded
 take-home assignment (original PDF: `docs/Tiqets Programming Assignment_ CSV files.pdf`).
 
-The authoritative requirements live in **`docs/Tiqets-Voucher-Generator-Spec.md`** — read it
-before making any design decision; don't re-derive requirements from scratch. Milestone progress
-is tracked in **`docs/Tiqets-Voucher-Generator-Plan.md`**.
+The authoritative requirements live in **`docs/Spec.md`** — read it before making any design
+decision; don't re-derive requirements from scratch. Milestone progress is tracked in
+**`docs/Plan.md`**.
 
 ## Current status
 
@@ -98,7 +98,8 @@ stats (top-5 customers, unused-barcode count) go to stdout only.
 - Designed for a single-pass/streaming approach (no nested loops / repeated full-file scans) even
   though the real sample data is small (~200 orders / ~620 barcodes) — a self-imposed
   production-readiness assumption, not a stated client requirement (spec §8).
-- SQL bonus requires **both** an ERD (primary artifact) and a UML class diagram (supplementary) —
-  spec §10.
+- SQL bonus delivers only an ERD (spec §10) — a UML class diagram was initially added too, but
+  since it duplicated the same entities/relationships the ERD already shows (with less detail),
+  it was dropped as redundant.
 - Documentation is intentionally consolidated into `README.md` (including a "Design Decisions"
   section) rather than a separate `DECISIONS.md`, so a reviewer only needs to open one file.

@@ -30,6 +30,16 @@ def test_group_barcodes_empty_input():
     assert group_barcodes([], []) == {}
 
 
+def test_group_barcodes_skips_unknown_order_id(capsys):
+    orders = [Order(order_id=1, customer_id=10)]
+    barcodes = [Barcode(barcode="A", order_id=1), Barcode(barcode="B", order_id=999)]
+
+    result = group_barcodes(orders, barcodes)
+
+    assert result == {(10, 1): ["A"]}
+    assert "999" in capsys.readouterr().err
+
+
 # --- build_rows ---
 
 

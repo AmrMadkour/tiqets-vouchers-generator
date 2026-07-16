@@ -1,3 +1,4 @@
+import sys
 from collections import defaultdict
 
 
@@ -11,7 +12,10 @@ def group_barcodes(orders, barcodes):
 
     grouped = {}
     for order_id, barcode_list in barcodes_by_order.items():
-        customer_id = order_customer[order_id]
+        customer_id = order_customer.get(order_id)
+        if customer_id is None:
+            print(f"Skipping barcodes for unknown order_id: {order_id}", file=sys.stderr)
+            continue
         grouped[(customer_id, order_id)] = barcode_list
 
     return grouped

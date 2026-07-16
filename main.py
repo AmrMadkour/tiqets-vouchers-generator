@@ -18,16 +18,20 @@ def main(orders_path, barcodes_path, output_path="vouchers.csv"):
         print(f"Error: file not found: {e.filename}", file=sys.stderr)
         sys.exit(1)
 
+    print("Duplicate barcodes dropped:", file=sys.stderr)
     cleaned_barcodes, _ = drop_duplicate_barcodes(raw_barcodes)
+
+    print("\nOrders dropped (no valid barcodes):", file=sys.stderr)
     cleaned_orders, _ = drop_orders_without_barcodes(raw_orders, cleaned_barcodes)
 
     grouped = group_barcodes(cleaned_orders, cleaned_barcodes)
     write_vouchers(output_path, build_rows(grouped))
 
+    print("\nTop 5 Customers:")
     for customer_id, ticket_count in top_5_customers(grouped):
         print(f"{customer_id},{ticket_count}")
 
-    print(f"Unused barcodes: {count_unused_barcodes(cleaned_barcodes)}")
+    print(f"\nUnused barcodes: {count_unused_barcodes(cleaned_barcodes)}")
 
 
 if __name__ == "__main__":
