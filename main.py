@@ -11,8 +11,12 @@ from service.unused_barcodes import count_unused_barcodes
 
 
 def main(orders_path, barcodes_path, output_path="vouchers.csv"):
-    raw_orders = read_orders(orders_path)
-    raw_barcodes = read_barcodes(barcodes_path)
+    try:
+        raw_orders = read_orders(orders_path)
+        raw_barcodes = read_barcodes(barcodes_path)
+    except FileNotFoundError as e:
+        print(f"Error: file not found: {e.filename}", file=sys.stderr)
+        sys.exit(1)
 
     cleaned_barcodes, _ = drop_duplicate_barcodes(raw_barcodes)
     cleaned_orders, _ = drop_orders_without_barcodes(raw_orders, cleaned_barcodes)

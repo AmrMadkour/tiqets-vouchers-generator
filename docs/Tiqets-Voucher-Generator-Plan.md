@@ -79,9 +79,30 @@ production-ready delivery. Check off each milestone as it's completed.
       `data/barcodes.csv` — ran manually, output confirmed; stdout formatting
       polish deferred to a later pass (tracked below, not blocking M5)
 
-## M6 — Code quality pass
-- [ ] Run static analysis (ruff or pylint), fix flagged issues
-- [ ] Review against spec §9 clean code / SOLID checklist
+## M6 — Code quality pass — done
+- [x] Run static analysis: `ruff check .` (default rule set) — clean, no
+      issues. `ruff check --select E,W,F,I,N,UP,B,C4,SIM .` (broader set) —
+      15 findings, all cosmetic (import sort order, line length over 88
+      chars, 2 files missing a trailing newline) or minor style (one unused
+      loop variable in `top_customers.py`). None are correctness issues.
+      Decision: left as-is — not worth the churn for a project this size,
+      see M8 decisions log.
+- [x] Review against spec §9 clean code / SOLID checklist — done via
+      manual file-by-file walkthrough (`main.py`, `csv_io/orders_reader.py`,
+      `csv_io/barcodes_reader.py`, `validation/duplicate_barcodes.py`,
+      `validation/orphaned_orders.py`, `service/grouping.py`): confirmed
+      naming, no unnecessary interfaces/DI (would be over-engineering for a
+      stateless data pipeline — no swappable implementations, no live
+      boundary to mock), dict-construction patterns (comprehension vs.
+      `defaultdict(list)`) verified as the right tool per 1-to-1 vs. 1-to-many
+      key relationships, all multi-pass loops confirmed `O(n)` not `O(n²)`.
+      Found and fixed two real gaps during the pass: `FileNotFoundError`
+      on a missing input file was unhandled (now caught once in `main()`,
+      clean stderr message + exit(1)); `KeyError` on a missing/misspelled
+      CSV column was miscaught by `except ValueError` in both readers (now
+      a separate `except KeyError` that bails early with `break` instead of
+      re-logging the same missing-column error once per row). Both covered
+      by new tests (`tests/test_main.py`, plus additions to `tests/test_io.py`).
 
 ## M7 — SQL data model bonus — done
 - [x] ERD (tables/keys/indexes) — primary artifact (spec §10)
@@ -131,6 +152,11 @@ production-ready delivery. Check off each milestone as it's completed.
   - Delivery approach: `.claude/` + `CLAUDE.md` stay tracked on `main` (used
     across dev sessions), stripped only on a `deliver` branch + `git
     archive` zip at the very end — see Deployment/Delivery section.
+  - `ruff`'s broader rule set (import sort, line length, unused loop var,
+    etc.) flagged 15 cosmetic findings — none fixed. For a project this
+    size, reordering imports / wrapping long test assertion lines is churn
+    with no functional benefit; would reconsider on a larger/team codebase
+    where import-order consistency reduces merge conflicts.
 
 ## M9 — Final review
 - [ ] Compare finished project against the spec + original PDF assignment,

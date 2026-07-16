@@ -44,6 +44,18 @@ def test_read_orders_malformed_order_id_skipped(tmp_path, capsys):
     assert "abc" in capsys.readouterr().err
 
 
+def test_read_orders_missing_column_bails_early(tmp_path, capsys):
+    path = tmp_path / "orders.csv"
+    path.write_text("order_id,wrong_column\n1,10\n2,11\n")
+
+    result = read_orders(path)
+
+    assert result == []
+    err = capsys.readouterr().err
+    assert "missing expected column" in err
+    assert err.count("missing expected column") == 1
+
+
 # --- read_barcodes ---
 
 
@@ -74,6 +86,18 @@ def test_read_barcodes_malformed_order_id_skipped(tmp_path, capsys):
 
     assert result == [Barcode(barcode="11111111112", order_id=2)]
     assert "abc" in capsys.readouterr().err
+
+
+def test_read_barcodes_missing_column_bails_early(tmp_path, capsys):
+    path = tmp_path / "barcodes.csv"
+    path.write_text("barcode,wrong_column\n11111111111,1\n11111111112,2\n")
+
+    result = read_barcodes(path)
+
+    assert result == []
+    err = capsys.readouterr().err
+    assert "missing expected column" in err
+    assert err.count("missing expected column") == 1
 
 
 # --- write_vouchers ---
