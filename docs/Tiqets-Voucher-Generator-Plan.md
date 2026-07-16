@@ -72,21 +72,30 @@ production-ready delivery. Check off each milestone as it's completed.
       only returns data (no file/stdout I/O). Printing happens in `main.py`
       (M5), with its own tests there.
 
-## M5 — CLI wiring (`main.py`)
-- [ ] Wire csv_io(read) → validation → service → csv_io(write) + stdout bonus
+## M5 — CLI wiring (`main.py`) — done
+- [x] Wire csv_io(read) → validation → service → csv_io(write) + stdout bonus
       prints + stderr logs
-- [ ] End-to-end test run against the real `data/orders.csv` +
-      `data/barcodes.csv`
+- [x] End-to-end test run against the real `data/orders.csv` +
+      `data/barcodes.csv` — ran manually, output confirmed; stdout formatting
+      polish deferred to a later pass (tracked below, not blocking M5)
 
 ## M6 — Code quality pass
 - [ ] Run static analysis (ruff or pylint), fix flagged issues
 - [ ] Review against spec §9 clean code / SOLID checklist
 
-## M7 — SQL data model bonus
-- [ ] ERD (tables/keys/indexes) — primary artifact (spec §10)
-- [ ] UML class diagram — supplementary artifact
-- [ ] Tool decided at this milestone (dbdiagram.io / draw.io / plain
-      schema + explanation)
+## M7 — SQL data model bonus — done
+- [x] ERD (tables/keys/indexes) — primary artifact (spec §10)
+- [x] UML class diagram — supplementary artifact
+- [x] Tool: Mermaid (text-first, diffable, renders natively on GitHub) — both
+      diagrams also exported to static PNG via `mermaid-cli` for viewing
+      outside GitHub (no third-party upload)
+- [x] Delivered in `docs/Tiqets-Voucher-Generator-SQL-Model.md`: 3-table
+      schema (`customers`, `orders`, `barcodes`) with full DDL, indexes on
+      `orders.customer_id`/`barcodes.order_id` matching the program's actual
+      queries, ERD, UML class diagram, and a Design Decisions section
+      (no junction tables — both relationships are 1-to-many per spec §3, not
+      M2M; `DECIMAL` not `FLOAT` for money; `VARCHAR`+`CHECK` not `ENUM` for
+      portability; `barcode` typed `VARCHAR` not numeric)
 
 ## M8 — Production-readiness docs
 - [ ] Finalize `README.md`: Design Decisions section (output-format §7.1,

@@ -1,0 +1,26 @@
+classDiagram
+    class Customer {
+        +int id
+        +string firstName
+        +string lastName
+        +string email
+        +string phone
+        +string address
+        +datetime createdAt
+    }
+    class Order {
+        +int id
+        +int customerId
+        +datetime orderDate
+        +string status
+        +decimal total
+    }
+    class Barcode {
+        +int id
+        +string barcode
+        +int orderId
+        +decimal price
+    }
+
+    Customer "1" --> "0..*" Order : places
+    Order "1" --> "0..*" Barcode : contains
